@@ -26,6 +26,21 @@ export interface AddBookRequest {
   availableQuantity: number;
 }
 
+export interface BorrowBookItem {
+  bookid: number;
+  quantityrequested: number;
+}
+
+export interface BorrowBookRequest {
+  userId: string;
+  bookList: BorrowBookItem[];
+}
+
+export interface BorrowBookResponse {
+  message: string;
+  processInstanceKey: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookApiService {
   constructor(private http: HttpClient) {}
@@ -36,5 +51,12 @@ export class BookApiService {
 
   addBook(book: AddBookRequest): Observable<ApiBook> {
     return this.http.post<ApiBook>(`${API_BASE}/books`, book);
+  }
+
+  borrowBooks(request: BorrowBookRequest): Observable<BorrowBookResponse> {
+    return this.http.post<BorrowBookResponse>(
+      `${API_BASE}/bookrequest/borrow`,
+      request,
+    );
   }
 }

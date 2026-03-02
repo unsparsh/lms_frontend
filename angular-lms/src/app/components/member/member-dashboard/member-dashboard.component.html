@@ -1,21 +1,216 @@
 <h1>Member Dashboard</h1>
-<div class="stats-grid" *ngIf="member">
-  <div class="stat-card">
-    <span class="stat-value">{{ member.name }}</span>
-    <span class="stat-label">Welcome</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-value">{{ member.membershipExpiry }}</span>
-    <span class="stat-label">Membership Expires</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-value">${{ member.fineBalance }}</span>
-    <span class="stat-label">Fine Balance</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-value">{{ myBorrowed.length }}</span>
-    <span class="stat-label">Books Borrowed</span>
+
+<div class="stats-grid">
+  <div class="stat-card highlight-green">
+    <span class="stat-value">{{ totalBookCount }}</span>
+    <span class="stat-label">Active Borrowed Books</span>
   </div>
 </div>
-<div *ngIf="overdueCount > 0" class="alert warning">You have {{ overdueCount }} overdue book(s). Please return them to avoid additional fines.</div>
-<div *ngIf="pendingCount > 0" class="alert info">{{ pendingCount }} request(s) pending approval.</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner"></div>
+  <span>Loading borrowed books...</span>
+</div>
+
+<!-- Error State -->
+<div *ngIf="errorMessage" class="alert warning">{{ errorMessage }}</div>
+
+<!-- Borrowed Books Section -->
+<div *ngIf="!loading && transactions.length > 0" class="borrowed-section">
+  <h2>
+    <span class="status-dot active"></span>
+    Borrowed Books
+  </h2>
+  <div class="borrowed-list">
+    <div
+      class="borrowed-card active-card"
+      *ngFor="let txn of transactions"
+      (click)="openActions(txn)"
+    >
+      <div class="borrowed-card-header">
+        <span class="txn-badge active">TXN #{{ txn.transactionid }}</span>
+        <span
+          class="status-pill"
+          [ngClass]="{
+            'overdue': isOverdue(getEarliestDueDate(txn)),
+            'near-due': !isOverdue(getEarliestDueDate(txn)) && isReturnDateNear(getEarliestDueDate(txn)),
+            'active': !isOverdue(getEarliestDueDate(txn)) && !isReturnDateNear(getEarliestDueDate(txn))
+          }"
+        >
+          <ng-container *ngIf="isOverdue(getEarliestDueDate(txn))">Overdue</ng-container>
+          <ng-container *ngIf="!isOverdue(getEarliestDueDate(txn)) && isReturnDateNear(getEarliestDueDate(txn))">Due Soon</ng-container>
+          <ng-container *ngIf="!isOverdue(getEarliestDueDate(txn)) && !isReturnDateNear(getEarliestDueDate(txn))">Active</ng-container>
+        </span>
+      </div>
+
+      <!-- Loading line items -->
+      <div *ngIf="txn.loadingItems" class="card-loading">
+        <div class="spinner small"></div>
+      </div>
+
+      <!-- Line items loaded -->
+      <div *ngIf="!txn.loadingItems" class="borrowed-card-body">
+        <div class="book-line-item" *ngFor="let item of txn.lineItems">
+          <div class="book-line-left">
+            <svg class="book-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span class="book-name">{{ item.bookName }}</span>
+          </div>
+          <div class="due-date-chip"
+            [ngClass]="{
+              'overdue': isOverdue(item.due_date),
+              'near-due': !isOverdue(item.due_date) && isReturnDateNear(item.due_date)
+            }"
+          >
+            <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ formatDate(item.due_date) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="borrowed-card-footer">
+        <span class="book-count">{{ txn.lineItems.length }} book{{ txn.lineItems.length !== 1 ? 's' : '' }}</span>
+        <span class="click-hint">Click to manage →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Empty State -->
+<div *ngIf="!loading && transactions.length === 0 && !errorMessage" class="empty-state">
+  <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+  <p>No borrowed books yet.</p>
+  <span class="empty-hint">Browse the catalog and borrow your first book!</span>
+</div>
+
+<!-- ══════════════════ Action Modal ══════════════════ -->
+<div class="modal-overlay" *ngIf="showActionModal" (click)="closeActions()">
+  <div class="action-modal" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="modal-icon">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        Manage Transaction #{{ selectedTxn?.transactionid }}
+      </h3>
+      <button class="close-btn" (click)="closeActions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Book Selection — Multi-select with checkboxes -->
+    <div class="book-select-section" *ngIf="selectedTxn">
+      <div class="section-label-row">
+        <label class="section-label">Select books:</label>
+        <button class="select-all-btn" *ngIf="selectedTxn.lineItems.length > 1" (click)="toggleSelectAll()">
+          {{ allSelected ? 'Deselect All' : 'Select All' }}
+        </button>
+      </div>
+      <div class="book-select-list">
+        <div
+          class="book-select-item"
+          *ngFor="let item of selectedTxn.lineItems"
+          [class.selected]="isSelected(item)"
+          (click)="toggleItem(item)"
+        >
+          <!-- Checkbox -->
+          <div class="checkbox" [class.checked]="isSelected(item)">
+            <svg *ngIf="isSelected(item)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+
+          <svg class="book-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <div class="book-select-info">
+            <span class="book-select-name">{{ item.bookName }}</span>
+            <span class="book-select-due"
+              [ngClass]="{
+                'overdue': isOverdue(item.due_date),
+                'near-due': !isOverdue(item.due_date) && isReturnDateNear(item.due_date)
+              }"
+            >Due: {{ formatDate(item.due_date) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="selected-count" *ngIf="selectedItems.length > 0">
+        {{ selectedItems.length }} book{{ selectedItems.length > 1 ? 's' : '' }} selected
+      </div>
+    </div>
+
+    <!-- Extend Duration Dropdown -->
+    <div class="extend-section" *ngIf="showExtendPicker">
+      <label class="section-label">Extend by:</label>
+      <div class="extend-options">
+        <button class="extend-option" [class.active]="extendDays === 15" (click)="extendDays = 15">
+          <span class="extend-days">15</span>
+          <span class="extend-label">Days</span>
+        </button>
+        <button class="extend-option" [class.active]="extendDays === 30" (click)="extendDays = 30">
+          <span class="extend-days">30</span>
+          <span class="extend-label">Days</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Message -->
+    <div class="action-message" *ngIf="actionMessage"
+      [ngClass]="{ 'success': actionMessageType === 'success', 'error': actionMessageType === 'error' }"
+    >
+      {{ actionMessage }}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modal-actions" *ngIf="!actionLoading">
+      <ng-container *ngIf="!showExtendPicker">
+        <button class="action-btn return-btn" [disabled]="selectedItems.length === 0" (click)="returnBooks()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+          </svg>
+          Return {{ selectedItems.length > 1 ? selectedItems.length + ' Books' : 'Book' }}
+        </button>
+        <button class="action-btn extend-btn" [disabled]="selectedItems.length === 0" (click)="showExtendOptions()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Extend Date
+        </button>
+      </ng-container>
+      <ng-container *ngIf="showExtendPicker">
+        <button class="action-btn cancel-btn" (click)="showExtendPicker = false">Cancel</button>
+        <button class="action-btn confirm-extend-btn" (click)="extendDate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Extend by {{ extendDays }} Days
+        </button>
+      </ng-container>
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="modal-loading" *ngIf="actionLoading">
+      <div class="spinner"></div>
+      <span>Processing...</span>
+    </div>
+  </div>
+</div>
