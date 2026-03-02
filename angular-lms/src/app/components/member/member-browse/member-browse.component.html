@@ -169,4 +169,140 @@
       }}
     </span>
   </div>
+
+  <!-- Borrow Quantity Modal -->
+  <div
+    class="modal-overlay"
+    *ngIf="showBorrowModal"
+    (click)="closeBorrowModal()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Borrow Book</h2>
+        <button class="modal-close" (click)="closeBorrowModal()" title="Close">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="borrowBook">
+        <div class="book-info-card">
+          <div class="book-info-row">
+            <span class="info-label">Title</span>
+            <span class="info-value book-name">{{ borrowBook.bookName }}</span>
+          </div>
+          <div class="book-info-row">
+            <span class="info-label">Author</span>
+            <span class="info-value">{{ borrowBook.authorName }}</span>
+          </div>
+          <div class="book-info-row">
+            <span class="info-label">Category</span>
+            <span class="info-value">
+              <span class="category-tag">{{ borrowBook.category }}</span>
+            </span>
+          </div>
+          <div class="book-info-row">
+            <span class="info-label">Available</span>
+            <span class="info-value">
+              <span class="qty-badge in-stock">{{
+                borrowBook.availableQuantity
+              }}</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="quantity-section">
+          <label class="quantity-label">Select Quantity</label>
+          <div class="quantity-stepper">
+            <button
+              class="stepper-btn"
+              (click)="decrementQuantity()"
+              [disabled]="borrowQuantity <= 1"
+              title="Decrease"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <span class="quantity-display">{{ borrowQuantity }}</span>
+            <button
+              class="stepper-btn"
+              (click)="incrementQuantity()"
+              [disabled]="borrowQuantity >= maxBorrowQuantity"
+              title="Increase"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn-cancel"
+          (click)="closeBorrowModal()"
+          [disabled]="borrowing"
+        >
+          Cancel
+        </button>
+        <button
+          class="btn-confirm"
+          (click)="confirmBorrow()"
+          [disabled]="borrowing"
+        >
+          <div class="btn-spinner" *ngIf="borrowing"></div>
+          <svg
+            *ngIf="!borrowing"
+            xmlns="http://www.w3.org/2000/svg"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"
+            />
+          </svg>
+          <span>{{ borrowing ? "Processing..." : "Confirm Borrow" }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
