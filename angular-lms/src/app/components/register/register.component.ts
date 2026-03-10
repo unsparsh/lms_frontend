@@ -34,10 +34,21 @@ export class RegisterComponent {
 
     this.auth.register(name, email, password).subscribe({
       next: () => {
+        const user = this.auth.getCurrentUser();
+
+        // If the auth response already included userId, go to membership
+        if (user?.userId) {
+          this.toast.success(
+            'Account created successfully! Please choose a membership plan.',
+          );
+          this.router.navigate(['/member/membership']);
+          return;
+        }
+
+        // Proceed to membership page even without userId
         this.toast.success(
           'Account created successfully! Please choose a membership plan.',
         );
-        // Always redirect to membership page for new registrations
         this.router.navigate(['/member/membership']);
       },
       error: (err) => {

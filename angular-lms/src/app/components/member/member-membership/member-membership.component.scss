@@ -4,6 +4,96 @@
   animation: fadeInUp 0.5s ease;
 }
 
+/* ——— Approval Pending / Rejected Screen ——— */
+.approval-screen {
+  max-width: 520px;
+  margin: 4rem auto;
+  text-align: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 3rem 2.5rem;
+  box-shadow: var(--shadow-lg);
+  animation: fadeInUp 0.5s ease;
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .approval-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    margin-bottom: 2rem;
+  }
+}
+
+.approval-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+
+  svg {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.pending-screen {
+  border-color: rgba(251, 191, 36, 0.25);
+
+  h2 {
+    color: #fbbf24;
+  }
+}
+
+.pending-anim {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(251, 191, 36, 0);
+  }
+}
+
+.btn-go-login {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+
+  &:hover {
+    background: var(--accent-hover);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 /* Status Banner */
 .status-banner {
   padding: 1.5rem 2rem;

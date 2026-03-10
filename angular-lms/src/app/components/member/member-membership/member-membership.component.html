@@ -1,47 +1,85 @@
 <div class="membership-page">
-  <!-- Status Banner -->
-  <div class="status-banner" [ngClass]="isActive ? 'active' : 'inactive'">
-    <div class="status-content">
-      <div class="status-icon">{{ isActive ? "✓" : "⚠" }}</div>
-      <div class="status-text">
-        <h3 *ngIf="isActive">Your Membership is Active</h3>
-        <h3 *ngIf="!isActive">No Active Membership</h3>
-        <p *ngIf="isActive">
-          Valid until {{ member?.membershipExpiry }} · {{ getDaysLeft() }} days
-          remaining
-        </p>
-        <p *ngIf="!isActive">
-          Please choose a plan below to activate your library membership and
-          access all features.
-        </p>
-      </div>
+  <!-- Approval Pending Screen -->
+  <div
+    class="approval-screen pending-screen"
+    *ngIf="approvalPending && !isActive"
+  >
+    <div class="approval-icon pending-anim">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="56"
+        height="56"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
     </div>
+    <h2>Membership Approval Under Process</h2>
+    <p class="approval-desc">
+      Your membership application has been submitted successfully and is
+      currently being reviewed by the librarian. Please try logging in again
+      once your membership has been approved.
+    </p>
+    <button class="btn-go-login" (click)="goToLogin()">
+      Log Out & Try Again Later
+    </button>
   </div>
 
-  <!-- Plans -->
-  <h2 class="section-title">Choose a Membership Plan</h2>
-  <div class="plans-grid">
-    <div
-      *ngFor="let plan of plans"
-      class="plan-card"
-      [ngClass]="{ popular: plan.popular }"
-    >
-      <div class="popular-badge" *ngIf="plan.popular">Most Popular</div>
-      <h3 class="plan-name">{{ plan.name }}</h3>
-      <div class="plan-price">{{ plan.price }}</div>
-      <div class="plan-duration">{{ plan.duration }}</div>
-      <ul class="plan-features">
-        <li *ngFor="let feature of plan.features">
-          <span class="check-icon">✓</span> {{ feature }}
-        </li>
-      </ul>
-      <button
-        class="btn-activate"
-        [ngClass]="{ 'btn-popular': plan.popular }"
-        (click)="activatePlan(plan)"
-      >
-        {{ isActive ? "Switch Plan" : "Activate" }}
-      </button>
+  <!-- Active Membership Screen -->
+  <ng-container *ngIf="!approvalPending || isActive">
+    <!-- Status Banner -->
+    <div class="status-banner" [ngClass]="isActive ? 'active' : 'inactive'">
+      <div class="status-content">
+        <div class="status-icon">{{ isActive ? "✓" : "⚠" }}</div>
+        <div class="status-text">
+          <h3 *ngIf="isActive">Your Membership is Active</h3>
+          <h3 *ngIf="!isActive">No Active Membership</h3>
+          <p *ngIf="!isActive">
+            Please choose a plan below to apply for your library membership.
+            Your application will be reviewed by the librarian.
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <!-- Plans -->
+    <h2 class="section-title">Choose a Membership Plan</h2>
+    <div class="plans-grid">
+      <div
+        *ngFor="let plan of plans"
+        class="plan-card"
+        [ngClass]="{ popular: plan.popular }"
+      >
+        <div class="popular-badge" *ngIf="plan.popular">Most Popular</div>
+        <h3 class="plan-name">{{ plan.name }}</h3>
+        <div class="plan-price">{{ plan.price }}</div>
+        <div class="plan-duration">{{ plan.duration }}</div>
+        <ul class="plan-features">
+          <li *ngFor="let feature of plan.features">
+            <span class="check-icon">✓</span> {{ feature }}
+          </li>
+        </ul>
+        <button
+          class="btn-activate"
+          [ngClass]="{ 'btn-popular': plan.popular }"
+          [disabled]="activatingPlanId !== null"
+          (click)="activatePlan(plan)"
+        >
+          {{
+            activatingPlanId === plan.id
+              ? "Submitting..."
+              : isActive
+                ? "Switch Plan"
+                : "Apply"
+          }}
+        </button>
+      </div>
+    </div>
+  </ng-container>
 </div>

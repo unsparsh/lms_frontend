@@ -1,5 +1,5 @@
 <div class="login-container">
-  <div class="login-card">
+  <div class="login-card" *ngIf="!statusScreen">
     <h1>Library Management System</h1>
     <h2>Sign In</h2>
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -42,6 +42,64 @@
     </form>
     <p class="register-link">
       Don't have an account? <a routerLink="/register">Register here</a>
+    </p>
+  </div>
+
+  <!-- Pending Approval Screen -->
+  <div class="status-card pending" *ngIf="statusScreen === 'PENDING'">
+    <div class="status-icon-wrapper pending-icon">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    </div>
+    <h2>Membership Approval Under Process</h2>
+    <p class="status-description">
+      Your membership application has been submitted and is currently being
+      reviewed. Please try logging in again later once your membership is
+      approved.
+    </p>
+    <button class="btn-primary" (click)="backToLogin()">← Back to Login</button>
+  </div>
+
+  <!-- Rejected Screen -->
+  <div class="status-card rejected" *ngIf="statusScreen === 'REJECTED'">
+    <div class="status-icon-wrapper rejected-icon">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    </div>
+    <h2>Membership Approval Rejected</h2>
+    <p class="status-description">
+      Unfortunately, your membership application has been rejected. Please try
+      registering with another ID or contact the library administrator for
+      assistance.
+    </p>
+    <button class="btn-primary" (click)="backToLogin()">← Back to Login</button>
+    <p class="register-link">
+      Try with a different account? <a routerLink="/register">Register here</a>
     </p>
   </div>
 </div>

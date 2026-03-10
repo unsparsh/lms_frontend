@@ -1,28 +1,36 @@
 import { Component, OnInit } from '@angular/core';
-import { Book } from '../../../models/book.model';
-import { BookService } from '../../../services/book.service';
+import {
+  BookApiService,
+  ApiBook,
+  AddBookRequest,
+} from '../../../services/book-api.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-librarian-books',
   templateUrl: './librarian-books.component.html',
-  styleUrls: ['./librarian-books.component.scss']
+  styleUrls: ['./librarian-books.component.scss'],
 })
 export class LibrarianBooksComponent implements OnInit {
-  books: Book[] = [];
+  books: ApiBook[] = [];
   form: FormGroup;
   showForm = false;
+  isSubmitting = false;
 
   constructor(
-    private bookService: BookService,
-    private fb: FormBuilder
+    private bookApiService: BookApiService,
+    private fb: FormBuilder,
+    private toast: ToastService,
   ) {
     this.form = this.fb.group({
-      title: ['', Validators.required],
-      author: ['', Validators.required],
-      isbn: ['', Validators.required],
+      bookName: ['', Validators.required],
+      authorName: ['', Validators.required],
+      publisherName: ['', Validators.required],
       category: ['', Validators.required],
-      quantity: [1, [Validators.required, Validators.min(1)]]
+      available: [true],
+      totalQuantity: [1, [Validators.required, Validators.min(1)]],
+      availableQuantity: [1, [Validators.required, Validators.min(0)]],
     });
   }
 
@@ -31,12 +39,22 @@ export class LibrarianBooksComponent implements OnInit {
   }
 
   loadBooks(): void {
-    this.books = this.bookService.getAllBooks();
+    this.bookApiService.getAllBooks().subscribe({
+      next: (books) => (this.books = books),
+      error: (err) => {
+        console.error('Failed to load books', err);
+        this.toast.danger('Failed to load books');
+      },
+    });
   }
 
   openForm(): void {
     this.showForm = true;
-    this.form.reset({ quantity: 1 });
+    this.form.reset({
+      available: true,
+      totalQuantity: 1,
+      availableQuantity: 1,
+    });
   }
 
   closeForm(): void {
@@ -44,21 +62,46 @@ export class LibrarianBooksComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.isSubmitting) return;
+    this.isSubmitting = true;
+
     const val = this.form.value;
-    this.bookService.addBook({
-      title: val.title,
-      author: val.author,
-      isbn: val.isbn,
+    const request: AddBookRequest = {
+      bookName: val.bookName,
+      authorName: val.authorName,
+      publisherName: val.publisherName,
       category: val.category,
-      quantity: val.quantity,
-      availableQuantity: val.quantity
+      available: val.available,
+      totalQuantity: val.totalQuantity,
+      availableQuantity: val.availableQuantity,
+    };
+
+    this.bookApiService.addBook(request).subscribe({
+      next: (newBook) => {
+        this.toast.success(`Book "${newBook.bookName}" added successfully!`);
+        this.loadBooks();
+        this.closeForm();
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        console.error('Failed to add book', err);
+        this.toast.danger('Failed to add book. Please try again.');
+        this.isSubmitting = false;
+      },
     });
-    this.loadBooks();
-    this.closeForm();
   }
 
   get categories(): string[] {
-    return ['Fiction', 'Non-Fiction', 'Science', 'Technology', 'History', 'Biography', 'Children', 'Other'];
+    return [
+      'Fiction',
+      'Non-Fiction',
+      'Science',
+      'Technology',
+      'History',
+      'Biography',
+      'Children',
+      'Polity',
+      'Other',
+    ];
   }
 }

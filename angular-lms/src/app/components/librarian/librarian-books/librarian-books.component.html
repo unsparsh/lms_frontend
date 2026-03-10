@@ -6,16 +6,28 @@
     <h3>Add Book</h3>
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label>Title</label>
-        <input formControlName="title" type="text">
+        <label>Book Name</label>
+        <input
+          formControlName="bookName"
+          type="text"
+          placeholder="Enter book name"
+        />
       </div>
       <div class="form-group">
-        <label>Author</label>
-        <input formControlName="author" type="text">
+        <label>Author Name</label>
+        <input
+          formControlName="authorName"
+          type="text"
+          placeholder="Enter author name"
+        />
       </div>
       <div class="form-group">
-        <label>ISBN</label>
-        <input formControlName="isbn" type="text">
+        <label>Publisher Name</label>
+        <input
+          formControlName="publisherName"
+          type="text"
+          placeholder="Enter publisher name"
+        />
       </div>
       <div class="form-group">
         <label>Category</label>
@@ -25,12 +37,30 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Quantity</label>
-        <input formControlName="quantity" type="number" min="1">
+        <label>Total Quantity</label>
+        <input formControlName="totalQuantity" type="number" min="1" />
+      </div>
+      <div class="form-group">
+        <label>Available Quantity</label>
+        <input formControlName="availableQuantity" type="number" min="0" />
+      </div>
+      <div class="form-group checkbox-group">
+        <label>
+          <input formControlName="available" type="checkbox" />
+          Available
+        </label>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="closeForm()">Cancel</button>
-        <button type="submit" class="btn-primary" [disabled]="form.invalid">Add Book</button>
+        <button type="button" class="btn-secondary" (click)="closeForm()">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="form.invalid || isSubmitting"
+        >
+          {{ isSubmitting ? "Adding..." : "Add Book" }}
+        </button>
       </div>
     </form>
   </div>
@@ -39,22 +69,26 @@
 <table class="table">
   <thead>
     <tr>
-      <th>Title</th>
+      <th>Book ID</th>
+      <th>Book Name</th>
       <th>Author</th>
+      <th>Publisher</th>
       <th>Category</th>
-      <th>ISBN</th>
       <th>Available</th>
-      <th>Total</th>
+      <th>Total Qty</th>
+      <th>Available Qty</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let b of books">
-      <td>{{ b.title }}</td>
-      <td>{{ b.author }}</td>
+      <td>{{ b.bookId }}</td>
+      <td>{{ b.bookName }}</td>
+      <td>{{ b.authorName }}</td>
+      <td>{{ b.publisherName }}</td>
       <td>{{ b.category }}</td>
-      <td>{{ b.isbn }}</td>
-      <td>{{ b.availableQuantity }}</td>
-      <td>{{ b.quantity }}</td>
+      <td>{{ b.available !== null ? (b.available ? "Yes" : "No") : "—" }}</td>
+      <td>{{ b.totalQuantity }}</td>
+      <td>{{ b.availableQuantity !== null ? b.availableQuantity : "—" }}</td>
     </tr>
   </tbody>
 </table>

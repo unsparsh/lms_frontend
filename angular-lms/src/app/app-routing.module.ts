@@ -19,7 +19,7 @@ import { LibrarianMailLogComponent } from './components/librarian/librarian-mail
 import { MemberDashboardComponent } from './components/member/member-dashboard/member-dashboard.component';
 import { MemberBrowseComponent } from './components/member/member-browse/member-browse.component';
 import { MemberMyRequestsComponent } from './components/member/member-my-requests/member-my-requests.component';
-import { MemberHistoryComponent } from './components/member/member-history/member-history.component';
+
 import { MemberReportsComponent } from './components/member/member-reports/member-reports.component';
 import { MemberMembershipComponent } from './components/member/member-membership/member-membership.component';
 
@@ -64,11 +64,7 @@ const routes: Routes = [
             component: MemberMyRequestsComponent,
             canActivate: [MembershipGuard],
           },
-          {
-            path: 'history',
-            component: MemberHistoryComponent,
-            canActivate: [MembershipGuard],
-          },
+
           {
             path: 'reports',
             component: MemberReportsComponent,
