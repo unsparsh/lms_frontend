@@ -1,7 +1,18 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { Member } from '../models/member.model';
 
 const MEMBERS_KEY = 'lms_members';
+const API_BASE = 'http://localhost:8082/api';
+
+/** Shape returned by GET /api/users1 */
+export interface ApiUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MemberService {
@@ -14,8 +25,13 @@ export class MemberService {
     localStorage.setItem(MEMBERS_KEY, JSON.stringify(members));
   }
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.seedMembers();
+  }
+
+  /** Fetch all users from backend API (requires auth token) */
+  getAllUsersFromApi(): Observable<ApiUser[]> {
+    return this.http.get<ApiUser[]>(`${API_BASE}/users1`);
   }
 
   private seedMembers(): void {

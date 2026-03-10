@@ -1,66 +1,194 @@
-<h1>Members Management</h1>
-<button class="btn-primary" (click)="openForm()">Add Member / Subscription</button>
+<h1>
+  <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  Members
+</h1>
 
-<div class="modal" *ngIf="showForm">
-  <div class="modal-content">
-    <h3>Add Member</h3>
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label>Name</label>
-        <input formControlName="name" type="text">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input formControlName="email" type="email">
-      </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <input formControlName="phone" type="text">
-      </div>
-      <div class="form-group">
-        <label>Membership Expiry</label>
-        <input formControlName="membershipExpiry" type="date">
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select formControlName="status">
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="closeForm()">Cancel</button>
-        <button type="submit" class="btn-primary" [disabled]="form.invalid">Add Member</button>
-      </div>
-    </form>
+<!-- Search Bar -->
+<div class="search-bar">
+  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+  <input
+    type="text"
+    placeholder="Search by name, email, or role..."
+    [(ngModel)]="searchTerm"
+    (ngModelChange)="applyFilter()"
+    class="search-input"
+  />
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-chip">
+    <span class="stat-value">{{ filteredUsers.length }}</span>
+    <span class="stat-label">Members</span>
   </div>
 </div>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Phone</th>
-      <th>Expiry</th>
-      <th>Status</th>
-      <th>Fine Balance</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let m of members">
-      <td>{{ m.name }}</td>
-      <td>{{ m.email }}</td>
-      <td>{{ m.phone }}</td>
-      <td>{{ m.membershipExpiry }}</td>
-      <td><span class="badge" [class]="m.status">{{ m.status }}</span></td>
-      <td>${{ m.fineBalance }}</td>
-      <td>
-        <button *ngIf="m.status === 'pending'" class="btn-sm approve" (click)="approve(m)">Approve</button>
-        <button *ngIf="m.status === 'pending'" class="btn-sm reject" (click)="reject(m)">Reject</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner"></div>
+  <span>Loading members...</span>
+</div>
+
+<!-- Error State -->
+<div *ngIf="errorMessage" class="alert warning">{{ errorMessage }}</div>
+
+<!-- Members Table -->
+<div *ngIf="!loading && filteredUsers.length > 0" class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let user of filteredUsers"
+        class="member-row"
+        (click)="openUserBorrowed(user)"
+      >
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar">{{ (user.name || user.email || '?').charAt(0).toUpperCase() }}</div>
+            <span class="user-name">{{ user.name || '—' }}</span>
+          </div>
+        </td>
+        <td class="email-cell">{{ user.email }}</td>
+        <td>
+          <span class="role-badge" [ngClass]="user.role.toLowerCase()">
+            {{ user.role }}
+          </span>
+        </td>
+        <td>
+          <button class="view-btn" (click)="$event.stopPropagation(); openUserBorrowed(user)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            View Books
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Empty State -->
+<div *ngIf="!loading && filteredUsers.length === 0 && !errorMessage" class="empty-state">
+  <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+  </svg>
+  <p>No members found.</p>
+  <span class="empty-hint" *ngIf="searchTerm">Try adjusting your search terms.</span>
+</div>
+
+<!-- ══════════════════ Borrowed Books Popup ══════════════════ -->
+<div class="modal-overlay" *ngIf="showPopup" (click)="closePopup()">
+  <div class="borrowed-popup" (click)="$event.stopPropagation()">
+    <!-- Popup Header -->
+    <div class="popup-header">
+      <div class="popup-title-section">
+        <div class="popup-avatar">{{ (selectedUser?.name || selectedUser?.email || '?').charAt(0).toUpperCase() }}</div>
+        <div>
+          <h3>{{ selectedUser?.name || selectedUser?.email }}</h3>
+          <span class="popup-subtitle">{{ selectedUser?.email }}</span>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closePopup()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Popup Stats -->
+    <div class="popup-stats" *ngIf="!borrowedLoading && !borrowedError">
+      <div class="popup-stat">
+        <span class="popup-stat-value">{{ borrowedTxns.length }}</span>
+        <span class="popup-stat-label">Transactions</span>
+      </div>
+      <div class="popup-stat">
+        <span class="popup-stat-value">{{ popupBookCount }}</span>
+        <span class="popup-stat-label">Books Borrowed</span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="borrowedLoading" class="popup-loading">
+      <div class="spinner"></div>
+      <span>Loading borrowed books...</span>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="borrowedError" class="popup-error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      {{ borrowedError }}
+    </div>
+
+    <!-- Transactions List -->
+    <div class="popup-body" *ngIf="!borrowedLoading && !borrowedError">
+      <!-- No borrowed books -->
+      <div *ngIf="borrowedTxns.length === 0" class="popup-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <p>This user has no borrowed books.</p>
+      </div>
+
+      <!-- Transaction cards -->
+      <div class="txn-card" *ngFor="let txn of borrowedTxns">
+        <div class="txn-card-header">
+          <span class="txn-badge">TXN #{{ txn.transactionid }}</span>
+          <span class="txn-book-count" *ngIf="!txn.loadingItems">
+            {{ txn.lineItems.length }} book{{ txn.lineItems.length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+
+        <!-- Loading line items -->
+        <div *ngIf="txn.loadingItems" class="txn-items-loading">
+          <div class="spinner small"></div>
+        </div>
+
+        <!-- Line items -->
+        <div *ngIf="!txn.loadingItems" class="txn-items">
+          <div class="txn-item" *ngFor="let item of txn.lineItems">
+            <div class="txn-item-left">
+              <svg class="book-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <span class="txn-item-name">{{ item.bookName }}</span>
+            </div>
+            <span class="due-chip"
+              [ngClass]="{
+                'overdue': isOverdue(item.due_date),
+                'near-due': !isOverdue(item.due_date) && isReturnDateNear(item.due_date)
+              }"
+            >
+              <svg class="cal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              {{ formatDate(item.due_date) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

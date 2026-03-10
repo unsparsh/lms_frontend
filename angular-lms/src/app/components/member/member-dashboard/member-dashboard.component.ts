@@ -1,4 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import {
   TransactionService,
@@ -17,7 +20,7 @@ interface TransactionWithDetails extends BorrowedTransaction {
   templateUrl: './member-dashboard.component.html',
   styleUrls: ['./member-dashboard.component.scss'],
 })
-export class MemberDashboardComponent implements OnInit {
+export class MemberDashboardComponent implements OnInit, OnDestroy {
   transactions: TransactionWithDetails[] = [];
   loading = false;
   errorMessage = '';
@@ -34,12 +37,33 @@ export class MemberDashboardComponent implements OnInit {
   showExtendPicker = false;
   extendDays: number = 15;  // dropdown: 15 or 30
 
+  private routerSub!: Subscription;
+
   constructor(
     private auth: AuthService,
+    private router: Router,
     private transactionService: TransactionService,
   ) {}
 
   ngOnInit(): void {
+    // Fetch borrowed books on initial load
+    this.fetchBorrowed();
+
+    // Also re-fetch every time the user navigates to this dashboard
+    this.routerSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((event) => {
+        if (event.urlAfterRedirects === '/member/dashboard') {
+          this.fetchBorrowed();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
+  }
+
+  private fetchBorrowed(): void {
     const userId = this.auth.getUserId();
     if (userId) {
       this.loadBorrowedBooks(userId);
