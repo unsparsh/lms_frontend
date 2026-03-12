@@ -38,6 +38,26 @@ export interface PendingRequestsResponse {
   pendingRequests: PendingRequest[];
 }
 
+/* ── Grouped Requests (Librarian) ── */
+export interface GroupedBookItem {
+  quantity: number;
+  bookname: string;
+  bookid: number;
+}
+
+export interface GroupedRequestItem {
+  booklist: GroupedBookItem[];
+  combinationid: string;
+}
+
+export interface GroupedRequestUser {
+  requestlist: GroupedRequestItem[];
+  usernemail: string;
+  userid: string;
+  username: string;
+}
+
+
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
   constructor(private http: HttpClient) {}
@@ -74,6 +94,12 @@ export class TransactionService {
   getPendingRequests(userId: string): Observable<PendingRequestsResponse> {
     return this.http.get<PendingRequestsResponse>(
       `${API_BASE}/book-requests/pending/${userId}`,
+    );
+  }
+
+  getGroupedRequests(): Observable<GroupedRequestUser[]> {
+    return this.http.get<GroupedRequestUser[]>(
+      `${API_BASE}/book-requests/grouped`
     );
   }
 }

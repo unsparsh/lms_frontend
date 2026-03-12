@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { BookRequest } from '../../../models/request.model';
-import { RequestService } from '../../../services/request.service';
+import { TransactionService, GroupedRequestUser } from '../../../services/transaction.service';
 
 @Component({
   selector: 'app-librarian-requests',
@@ -8,45 +7,34 @@ import { RequestService } from '../../../services/request.service';
   styleUrls: ['./librarian-requests.component.scss']
 })
 export class LibrarianRequestsComponent implements OnInit {
-  borrowRequests: BookRequest[] = [];
-  returnRequests: BookRequest[] = [];
-  extensionRequests: BookRequest[] = [];
+  groupedUsers: GroupedRequestUser[] = [];
+  selectedUser: GroupedRequestUser | null = null;
+  isModalOpen = false;
 
-  constructor(private requestService: RequestService) {}
+  constructor(private transactionService: TransactionService) {}
 
   ngOnInit(): void {
-    this.load();
+    this.loadGroupedRequests();
   }
 
-  load(): void {
-    const all = this.requestService.getAllRequests();
-    this.borrowRequests = all.filter(r => r.type === 'borrow' && r.status === 'pending');
-    this.returnRequests = all.filter(r => r.type === 'return' && r.status === 'pending');
-    this.extensionRequests = all.filter(r => r.extensionRequested);
+  loadGroupedRequests(): void {
+    this.transactionService.getGroupedRequests().subscribe({
+      next: (data) => {
+        this.groupedUsers = data;
+      },
+      error: (err) => {
+        console.error('Error fetching grouped requests', err);
+      }
+    });
   }
 
-  approveBorrow(id: string): void {
-    this.requestService.approveBorrow(id);
-    this.load();
+  openUserRequests(user: GroupedRequestUser): void {
+    this.selectedUser = user;
+    this.isModalOpen = true;
   }
 
-  rejectRequest(id: string): void {
-    this.requestService.rejectRequest(id);
-    this.load();
-  }
-
-  processReturn(id: string): void {
-    this.requestService.processReturn(id);
-    this.load();
-  }
-
-  approveExtension(id: string): void {
-    this.requestService.approveExtension(id);
-    this.load();
-  }
-
-  rejectExtension(id: string): void {
-    this.requestService.rejectExtension(id);
-    this.load();
+  closeModal(): void {
+    this.isModalOpen = false;
+    this.selectedUser = null;
   }
 }

@@ -1,82 +1,63 @@
-<h1>Requests Management</h1>
+<h1>Requests History</h1>
 
 <section>
-  <h2>Borrow Requests (Pending)</h2>
-  <table class="table" *ngIf="borrowRequests.length">
+  <h2>Book Request History</h2>
+  <table class="table" *ngIf="groupedUsers.length">
     <thead>
       <tr>
-        <th>Request ID</th>
-        <th>Member</th>
-        <th>Book</th>
-        <th>Requested</th>
-        <th>Actions</th>
+        <th>User Name</th>
+        <th>Email</th>
+        <th>Total Requests</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let r of borrowRequests">
-        <td>{{ r.requestId }}</td>
-        <td>{{ r.memberEmail }}</td>
-        <td>{{ r.bookTitle }}</td>
-        <td>{{ r.requestedAt | date:'short' }}</td>
+      <tr *ngFor="let user of groupedUsers">
+        <td>{{ user.username }}</td>
+        <td>{{ user.usernemail }}</td>
+        <td>{{ user.requestlist.length }}</td>
         <td>
-          <button class="btn-sm approve" (click)="approveBorrow(r.requestId)">Approve</button>
-          <button class="btn-sm reject" (click)="rejectRequest(r.requestId)">Reject</button>
+          <button class="btn-sm view-btn" (click)="openUserRequests(user)">View Details</button>
         </td>
       </tr>
     </tbody>
   </table>
-  <p *ngIf="!borrowRequests.length">No pending borrow requests.</p>
+  <p *ngIf="!groupedUsers.length">No book requests found.</p>
 </section>
 
-<section>
-  <h2>Return Requests (Pending)</h2>
-  <table class="table" *ngIf="returnRequests.length">
-    <thead>
-      <tr>
-        <th>Request ID</th>
-        <th>Member</th>
-        <th>Book</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of returnRequests">
-        <td>{{ r.requestId }}</td>
-        <td>{{ r.memberEmail }}</td>
-        <td>{{ r.bookTitle }}</td>
-        <td>
-          <button class="btn-sm approve" (click)="processReturn(r.requestId)">Process Return</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <p *ngIf="!returnRequests.length">No pending return requests.</p>
+<section class="tasklist-link-section">
+  <a href="https://sin-1.tasklist.camunda.io/3330162e-be08-4e13-92b5-9775516178b6/tasklist"
+     target="_blank" rel="noopener noreferrer" class="tasklist-link">
+    <span class="link-icon">&#x1F4CB;</span>
+    Open Camunda Tasklist
+    <span class="external-icon">&#x2197;</span>
+  </a>
 </section>
 
-<section>
-  <h2>Extension Requests</h2>
-  <table class="table" *ngIf="extensionRequests.length">
-    <thead>
-      <tr>
-        <th>Request ID</th>
-        <th>Member</th>
-        <th>Book</th>
-        <th>Due Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of extensionRequests">
-        <td>{{ r.requestId }}</td>
-        <td>{{ r.memberEmail }}</td>
-        <td>{{ r.bookTitle }}</td>
-        <td>{{ r.dueDate }}</td>
-        <td>
-          <button class="btn-sm approve" (click)="approveExtension(r.requestId)">Approve</button>
-          <button class="btn-sm reject" (click)="rejectExtension(r.requestId)">Reject</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <p *ngIf="!extensionRequests.length">No extension requests.</p>
-</section>
+<div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Requests for {{ selectedUser?.username }}</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div *ngFor="let req of selectedUser?.requestlist" class="combination-card">
+        <h4>Combination ID: {{ req.combinationid }}</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Book Name</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let book of req.booklist">
+              <td>{{ book.bookname }}</td>
+              <td>{{ book.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
